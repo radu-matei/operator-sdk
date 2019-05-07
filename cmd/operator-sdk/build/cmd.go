@@ -64,7 +64,7 @@ For example:
 	buildCmd.Flags().StringVar(&testLocationBuild, "test-location", "./test/e2e", "Location of tests")
 	buildCmd.Flags().StringVar(&namespacedManBuild, "namespaced-manifest", "deploy/operator.yaml", "Path of namespaced resources manifest for tests")
 	buildCmd.Flags().StringVar(&imageBuildArgs, "image-build-args", "", "Extra image build arguments as one string such as \"--build-arg https_proxy=$https_proxy\"")
-	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, buildah]")
+	buildCmd.Flags().StringVar(&imageBuilder, "image-builder", "docker", "Tool to build OCI images. One of: [docker, buildah, az]")
 	return buildCmd
 }
 
@@ -150,6 +150,10 @@ func createBuildCommand(imageBuilder, context, dockerFile, image string, imageBu
 		args = append(args, "build", "-f", dockerFile, "-t", image)
 	case "buildah":
 		args = append(args, "bud", "--format=docker", "-f", dockerFile, "-t", image)
+	case "az":
+		reg := strings.Split((strings.Split(image, "/")[0]), ".")[0]
+		img := strings.Split(image, "/")[1]
+		args = append(args, "acr", "build", "--registry", reg, "--image", img, "-f", dockerFile)
 	default:
 		return nil, fmt.Errorf("%s is not supported image builder", imageBuilder)
 	}
